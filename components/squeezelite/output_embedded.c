@@ -115,12 +115,17 @@ void output_close_embedded(void) {
 	output_visu_close();
 }
 
+// inverting at exactly unity would wrap the most negative 16-bit sample back onto itself
+static s32_t inverted_gain(unsigned volume) {
+	return -(s32_t)min(volume, FIXED_ONE - 1);
+}
+
 void set_volume(unsigned left, unsigned right) { 
 	LOG_DEBUG("setting internal gain left: %u right: %u", left, right);
 	if (!volume_cb || !(*volume_cb)(left, right)) {
 		LOCK;
-		output.gainL = left;
-		output.gainR = right;
+		output.gainL = inverted_gain(left);
+		output.gainR = inverted_gain(right);
 		UNLOCK;
 	}
     equalizer_set_volume(left, right);
